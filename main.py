@@ -1,21 +1,29 @@
-import tensorflow as tf
-import keras
-import yfinance as yf
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
 from keras.models import Sequential
-from keras.layers import LSTM, Dense, Dropout, AdditiveAttention, Permute, Reshape, Multiply
+from keras.layers import (
+    LSTM,
+    Dense,
+    Dropout,
+    AdditiveAttention,
+    Permute,
+    Reshape,
+    Multiply,
+)
 from sklearn.preprocessing import MinMaxScaler
-
 from keras.layers import BatchNormalization
 from keras.callbacks import EarlyStopping
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+import tensorflow as tf
+import pandas as pd
+import mplfinance as mpf
+import matplotlib.pyplot as plt
+import yfinance as yf
+import numpy as np
 
 # Check TensorFlow version
 print("TensorFlow Version: ", tf.__version__)
-company= 'TSLA'
+company = "TSLA"
 # Fetch AAPL data
-company_data = yf.download(company, start='2020-01-01', end='2024-06-01')
+company_data = yf.download(company, start="2020-01-01", end="2024-06-01")
 
 # Display the first few rows of the dataframe
 company_data.head()
@@ -24,18 +32,17 @@ company_data.head()
 company_data.isnull().sum()
 
 # Filling missing values, if any
-company_data.fillna(method='ffill', inplace=True)
+company_data.fillna(method="ffill", inplace=True)
 
 
-
-scaler = MinMaxScaler(feature_range=(0,1))
-aapl_data_scaled = scaler.fit_transform(company_data['Close'].values.reshape(-1, 1))
+scaler = MinMaxScaler(feature_range=(0, 1))
+aapl_data_scaled = scaler.fit_transform(company_data["Close"].values.reshape(-1, 1))
 
 X = []
 y = []
 
 for i in range(60, len(aapl_data_scaled)):
-    X.append(aapl_data_scaled[i-60:i, 0])
+    X.append(aapl_data_scaled[i - 60 : i, 0])
     y.append(aapl_data_scaled[i, 0])
 
 train_size = int(len(X) * 0.8)
@@ -48,7 +55,6 @@ X_train, y_train = np.array(X_train), np.array(y_train)
 X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
 
 
-
 model = Sequential()
 
 # Adding LSTM layers with return_sequences=True
@@ -57,7 +63,7 @@ model.add(LSTM(units=50, return_sequences=True))
 
 # Adding self-attention mechanism
 # The attention mechanism
-attention = AdditiveAttention(name='attention_weight')
+attention = AdditiveAttention(name="attention_weight")
 # Permute and reshape for compatibility
 model.add(Permute((2, 1)))
 model.add(Reshape((-1, X_train.shape[1])))
@@ -84,7 +90,7 @@ model.add(Dense(1))
 model.add(Dropout(0.2))
 model.add(BatchNormalization())
 
-model.compile(optimizer='adam', loss='mean_squared_error')
+model.compile(optimizer="adam", loss="mean_squared_error")
 
 model.summary()
 
@@ -92,9 +98,15 @@ model.summary()
 # history = model.fit(X_train, y_train, epochs=10, batch_size=25, validation_split=0.2)
 
 
-
-early_stopping = EarlyStopping(monitor='val_loss', patience=10)
-history = model.fit(X_train, y_train, epochs=100, batch_size=25, validation_split=0.2, callbacks=[early_stopping])
+early_stopping = EarlyStopping(monitor="val_loss", patience=10)
+history = model.fit(
+    X_train,
+    y_train,
+    epochs=100,
+    batch_size=25,
+    validation_split=0.2,
+    callbacks=[early_stopping],
+)
 
 
 # Convert X_test and y_test to Numpy arrays if they are not already
@@ -110,8 +122,6 @@ test_loss = model.evaluate(X_test, y_test)
 print("Test Loss: ", test_loss)
 
 
-from sklearn.metrics import mean_absolute_error, mean_squared_error
-
 # Making predictions
 y_pred = model.predict(X_test)
 
@@ -123,20 +133,16 @@ print("Mean Absolute Error: ", mae)
 print("Root Mean Square Error: ", rmse)
 
 
-import yfinance as yf
-import numpy as np
-from sklearn.preprocessing import MinMaxScaler
-
 # Fetching the latest 60 days of AAPL stock data
-data = yf.download(company, start='2024-03-07', end='2024-06-9')
+data = yf.download(company, start="2024-03-07", end="2024-06-9")
 print(data)
 
 # Selecting the 'Close' price and converting to numpy array
-closing_prices = data['Close'].values
+closing_prices = data["Close"].values
 
 # Scaling the data
-scaler = MinMaxScaler(feature_range=(0,1))
-scaled_data = scaler.fit_transform(closing_prices.reshape(-1,1))
+scaler = MinMaxScaler(feature_range=(0, 1))
+scaled_data = scaler.fit_transform(closing_prices.reshape(-1, 1))
 
 # Since we need the last 60 days to predict the next day, we reshape the data accordingly
 X_latest = np.array([scaled_data[-60:].reshape(60)])
@@ -153,15 +159,12 @@ print("Predicted Stock Prices for the next 4 days: ", predicted_stock_price)
 
 # -----------------------------------------------------------------------------
 
-import yfinance as yf
-import numpy as np
-from sklearn.preprocessing import MinMaxScaler
 
 # Fetch the latest 60 days of AAPL stock data
-data = yf.download(company, start='2024-03-07', end='2024-06-9')
+data = yf.download(company, start="2024-03-07", end="2024-06-9")
 
 # Select 'Close' price and scale it
-closing_prices = data['Close'].values.reshape(-1, 1)
+closing_prices = data["Close"].values.reshape(-1, 1)
 scaler = MinMaxScaler(feature_range=(0, 1))
 scaled_data = scaler.fit_transform(closing_prices)
 
@@ -187,11 +190,6 @@ print("Predicted Stock Prices for the next 4 days: ", predicted_prices)
 # -------------------------------------------------------------------------------
 
 
-import pandas as pd
-import mplfinance as mpf
-import matplotlib.dates as mpl_dates
-import matplotlib.pyplot as plt
-
 # Assuming 'data' is your DataFrame with the fetched AAPL stock data
 # Make sure it contains Open, High, Low, Close, and Volume columns
 
@@ -201,27 +199,34 @@ next_day = last_date + pd.Timedelta(days=1)
 prediction_dates = pd.date_range(start=next_day, periods=4)
 
 # Assuming 'predicted_prices' is your list of predicted prices for the next 4 days
-predictions_df = pd.DataFrame(index=prediction_dates, data=predicted_prices, columns=['Close'])
+predictions_df = pd.DataFrame(
+    index=prediction_dates, data=predicted_prices, columns=["Close"]
+)
 
 # Plotting the actual data with mplfinance
-mpf.plot(data, type='candle', style='charles', volume=True)
+mpf.plot(data, type="candle", style="charles", volume=True)
 
 # Overlaying the predicted data
-plt.figure(figsize=(10,6))
-plt.plot(predictions_df.index, predictions_df['Close'], linestyle='dashed', marker='o', color='red')
+plt.figure(figsize=(10, 6))
+plt.plot(
+    predictions_df.index,
+    predictions_df["Close"],
+    linestyle="dashed",
+    marker="o",
+    color="red",
+)
 
 plt.title(f"{company} Stock Price with Predicted Next 4 Days")
 plt.show()
 
-import mplfinance as mpf
-import matplotlib.dates as mpl_dates
-import matplotlib.pyplot as plt
 
 # Fetch the latest 60 days of AAPL stock data
-data = yf.download(company,start='2024-03-07', end='2024-06-9') # Fetch 64 days to display last 60 days in the chart
+data = yf.download(
+    company, start="2024-03-07", end="2024-06-9"
+)  # Fetch 64 days to display last 60 days in the chart
 
 # Select 'Close' price and scale it
-closing_prices = data['Close'].values.reshape(-1, 1)
+closing_prices = data["Close"].values.reshape(-1, 1)
 scaler = MinMaxScaler(feature_range=(0, 1))
 scaled_data = scaler.fit_transform(closing_prices)
 
@@ -241,21 +246,39 @@ next_day = last_date + pd.Timedelta(days=1)
 prediction_dates = pd.date_range(start=next_day, periods=4)
 
 # Adding predictions to the DataFrame
-predicted_data = pd.DataFrame(index=prediction_dates, data=predicted_prices, columns=['Close'])
+predicted_data = pd.DataFrame(
+    index=prediction_dates, data=predicted_prices, columns=["Close"]
+)
 
 # Combining both actual and predicted data
-combined_data = pd.concat([data['Close'], predicted_data['Close']])
-combined_data = combined_data[-64:] # Last 60 days of actual data + 4 days of predictions
+combined_data = pd.concat([data["Close"], predicted_data["Close"]])
+combined_data = combined_data[
+    -64:
+]  # Last 60 days of actual data + 4 days of predictions
 
 # Plotting the actual data
-plt.figure(figsize=(10,6))
-plt.plot(data.index[-60:], data['Close'][-60:], linestyle='-', marker='o', color='blue', label='Actual Data')
+plt.figure(figsize=(10, 6))
+plt.plot(
+    data.index[-60:],
+    data["Close"][-60:],
+    linestyle="-",
+    marker="o",
+    color="blue",
+    label="Actual Data",
+)
 
 # Plotting the predicted data
-plt.plot(prediction_dates, predicted_prices, linestyle='-', marker='o', color='red', label='Predicted Data')
+plt.plot(
+    prediction_dates,
+    predicted_prices,
+    linestyle="-",
+    marker="o",
+    color="red",
+    label="Predicted Data",
+)
 
 plt.title(f"{company} Stock Price: Last 60 Days and Next 4 Days Predicted")
-plt.xlabel('Date')
-plt.ylabel('Price')
+plt.xlabel("Date")
+plt.ylabel("Price")
 plt.legend()
 plt.show()
